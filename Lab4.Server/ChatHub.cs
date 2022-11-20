@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using Lab4.Generator;
+using Microsoft.AspNetCore.SignalR;
 using System.Xml.Linq;
 
 namespace Lab4.Server
@@ -14,7 +15,19 @@ namespace Lab4.Server
     {
         private static readonly List<UserInfo> _connectedUsers = new List<UserInfo>();
 
+        private static ulong _p;
+        private static ulong _g;
+
         private static bool _isChatStarted = false;
+
+        static ChatHub()
+        {
+            var generator = new GeneralValues();
+            _p = generator.P;
+            _g = generator.GetG();
+        }
+
+        public ChatHub() { }
 
         public async Task Connect(string name)
         {
@@ -26,7 +39,7 @@ namespace Lab4.Server
                     Name = name
                 });
 
-                await Clients.All.SendAsync("UserConnected", name);
+                await Clients.All.SendAsync("UserConnected", name, _p, _g);
             }
         }
 

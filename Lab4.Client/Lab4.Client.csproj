@@ -7,4 +7,8 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Lab4.Generator\Lab4.Generator.csproj" />
+  </ItemGroup>
+
 </Project>
