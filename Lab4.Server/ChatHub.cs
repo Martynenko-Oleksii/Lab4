@@ -69,9 +69,12 @@ namespace Lab4.Server
 
         public async Task SendMessage(string message)
         {
+            var currentUserId = Context.ConnectionId;
+            var currentUserIndex = _connectedUsers.FindIndex(x => x.Id.Equals(currentUserId));
             foreach (var user in _connectedUsers)
             {
-                await Clients.Client(user.Id).SendAsync("ReceiveMessage", message);
+                string name = _connectedUsers[currentUserIndex].Name;
+                await Clients.Client(user.Id).SendAsync("ReceiveMessage", message,name);
             }
         }
     }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -28,6 +29,7 @@ namespace Lab4.Client
             InitializeComponent();
         }
 
+
         private async Task HubConnection_Closed(Exception? arg)
         {
             await Task.Delay(new Random().Next(0, 5) * 1000);
@@ -39,12 +41,13 @@ namespace Lab4.Client
             try
             {
                 connection.InvokeAsync("StartChat");
-                ChatBlock.Text += "\nChat was Started";
+                ListBox1.Items.Add("Chat was Started");
+                ChatStart.IsEnabled = false;
 
             }
             catch (Exception ex)
             {
-                ChatBlock.Text += ex.Message;
+                ListBox1.Items.Add( ex.Message);
             }
         }
 
@@ -53,77 +56,75 @@ namespace Lab4.Client
             connection = new HubConnectionBuilder()
                 .WithUrl("http://localhost:5140/chat")
                 .Build();
-            //connection.Closed += HubConnection_Closed; // сделать проверку был ли введен юзер
-
-            connection.On<string, ulong, ulong>("UserConnected", (user, _p, _g) =>
-            {
-                this.Dispatcher.Invoke(() =>
-                {
-                    ChatBlock.Text += "\n" + user + " - User connected";
-                    var newMessage = $"{user}:{_p}:{_g}";
-                    //ChatBlock.Text = "\n" + Message;
-                    ListBox1.Items.Add(newMessage);
-                });
-            });
-            connection.On<string>("ReceiveMessage", (message) =>
-            {
-                this.Dispatcher.Invoke(() =>
-                {
-                    //ChatBlock.Text += message;
-                    ListBox1.Items.Add(message);
-                });
-            });
-
+            connection.Closed += HubConnection_Closed;
             string name = new string("");
             name = NicknameField.Text;
-
-            try
+            if (name == "Input nickname")
             {
-                await connection.StartAsync();
-                await connection.InvokeAsync("Connect",name);
-                //ListBox1.Items.Add(name+ "User connected");
-                NicknameLabel.Content = name;
-                
+                ErrorLabel.Content = "Error: Please enter your nickname";
+                ErrorLabel.Visibility = Visibility.Visible;
             }
-            catch (Exception ex)
+            else
             {
-                ChatBlock.Text += "\n"+ex.Message;
-            }
-
-
-            /*connection.On<string, ulong, ulong>("UserConnected", (user, _p, _g) =>
+                ErrorLabel.Visibility = Visibility.Hidden;
+                ListBox1.Items.Clear();
+                connection.On<string, ulong, ulong>("UserConnected", (user, _p, _g) =>
                 {
-                    var newMessage = $"{name}:{11}:{7}";
-                });*/
+                    this.Dispatcher.Invoke(() =>
+                    {
+                        
+                        ListBox1.Items.Add("\n" + user + " - User connected");
+                        var newMessage = $"{user}:{_p}:{_g}";
+                        //ListBox1.Items.Add(newMessage); // Вывод ключей _p and _g
+                    });
+                });
+                connection.On<string,string>("ReceiveMessage", (message, named) =>
+                {
+                    this.Dispatcher.Invoke(() =>
+                    {
+                        ListBox1.Items.Add(">>"+named+" says: "+message);
+                    });
+                });
+
+                try
+                {
+                    await connection.StartAsync();
+                    await connection.InvokeAsync("Connect", name);
+
+                    NicknameLabel.Content = name;
+
+                }
+                catch (Exception ex)
+                {
+                    ListBox1.Items.Add(ex.Message);
+                }
+                Connect.IsEnabled = false;
+                NicknameField.IsEnabled = false;
+            }
 
         }
-
         private void Send_Click(object sender, RoutedEventArgs e)
         {
+
             string message = new string("");
             message = TextInput.Text;
             try
             {
                 connection.InvokeAsync("SendMessage", message);
+                TextInput.Text = "";
             }
             catch (Exception ex)
             {
-                ChatBlock.Text += ex.Message;
+                ListBox1.Items.Add(ex.Message);
             }
 
-
-
-            /*test кнопки удалить
-            string notconn = "Not connected";
-            if (NicknameLabel.Content.ToString() != notconn && Content.ToString() != notconn )
-            {
-                
-                string temtext = new string("");
-                temtext = TextInput.Text;
-                ChatBlock.Text += "\n>>" + tempLabel1 + " Says: " + temtext;
-            }
-            else ChatBlock.Text += "\n" + notconn;
-            */
         }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            ListBox1.Items.Clear();
+            ListBox1.Items.Add("Not Connected");
+        }
+
     }
 }
