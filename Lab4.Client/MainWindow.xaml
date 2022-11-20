@@ -16,7 +16,8 @@
         <ScrollViewer Margin="262,28,138,121" Width="375" Background="#FFEBEBEB">
             <TextBlock x:Name="ChatBlock" HorizontalAlignment="Left" TextWrapping="Wrap" Text="Not connected" VerticalAlignment="Top" Width="376" Background="#FFEBEBEB" ScrollViewer.HorizontalScrollBarVisibility="Auto"/>
         </ScrollViewer>
-        
+        <ListBox x:Name="ListBox1" d:ItemsSource="{d:SampleData ItemCount=1}" Margin="274,137,169,121"/>
+
 
     </Grid>
 </Window>
