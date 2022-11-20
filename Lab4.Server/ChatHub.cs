@@ -39,12 +39,27 @@ namespace Lab4.Server
             }
         }
 
-        public async Task SendKey(ulong key)
+        public async Task SendKey(ulong key, int count)
         {
             var usersCount = _connectedUsers.Count;
             var currentUserId = Context.ConnectionId;
-
             var currentUserIndex = _connectedUsers.FindIndex(x => x.Id.Equals(currentUserId));
+            if (count + 1 != usersCount)
+            {
+                await Clients.Client(_connectedUsers[(currentUserIndex + 1) % usersCount].Id).SendAsync("ReceivePublicKeyPart", key, count);
+            }
+            else
+            {
+                await Clients.Client(_connectedUsers[(currentUserIndex + 1) % usersCount].Id).SendAsync("ReceiveLastPublicKeyPart", key);
+            }
+        }
+
+        public async Task SendMessage(string message)
+        {
+            foreach (var user in _connectedUsers)
+            {
+                await Clients.Client(user.Id).SendAsync("ReceiveMessage", message);
+            }
         }
     }
 }
