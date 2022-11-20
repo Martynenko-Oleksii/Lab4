@@ -22,10 +22,12 @@ namespace Lab4.Client
     public partial class MainWindow : Window
     {
         HubConnection connection;
+
         public MainWindow()
         {
             InitializeComponent();
         }
+
         private async Task HubConnection_Closed(Exception? arg)
         {
             await Task.Delay(new Random().Next(0, 5) * 1000);
@@ -34,8 +36,6 @@ namespace Lab4.Client
 
         private void ChatStart_Click(object sender, RoutedEventArgs e)
         {
-
-
             try
             {
                 connection.InvokeAsync("StartChat");
@@ -51,10 +51,29 @@ namespace Lab4.Client
         private async void Connect_Click(object sender, RoutedEventArgs e)
         {
             connection = new HubConnectionBuilder()
-                .WithUrl("http://localhost:31182/chat")
+                .WithUrl("http://localhost:5140/chat")
                 .Build();
             //connection.Closed += HubConnection_Closed; // сделать проверку был ли введен юзер
-            
+
+            connection.On<string, ulong, ulong>("UserConnected", (user, _p, _g) =>
+            {
+                this.Dispatcher.Invoke(() =>
+                {
+                    ChatBlock.Text += "\n" + user + " - User connected";
+                    var newMessage = $"{user}:{_p}:{_g}";
+                    //ChatBlock.Text = "\n" + Message;
+                    ListBox1.Items.Add(newMessage);
+                });
+            });
+            connection.On<string>("ReceiveMessage", (message) =>
+            {
+                this.Dispatcher.Invoke(() =>
+                {
+                    //ChatBlock.Text += message;
+                    ListBox1.Items.Add(message);
+                });
+            });
+
             string name = new string("");
             name = NicknameField.Text;
 
@@ -62,15 +81,8 @@ namespace Lab4.Client
             {
                 await connection.StartAsync();
                 await connection.InvokeAsync("Connect",name);
-                ChatBlock.Text += "\n"+ name+" - User connected";
                 //ListBox1.Items.Add(name+ "User connected");
                 NicknameLabel.Content = name;
-                connection.On<string, ulong, ulong>("UserConnected", (user, _p, _g) =>
-                {
-                    var newMessage = $"{name}:{_p}:{_g}";
-                    //ChatBlock.Text = "\n" + Message;
-                    ListBox1.Items.Add(newMessage);
-                });
                 
             }
             catch (Exception ex)
@@ -93,11 +105,6 @@ namespace Lab4.Client
             try
             {
                 connection.InvokeAsync("SendMessage", message);
-                connection.On<string>("ReceiveMessage", (message) =>
-                {
-                    //ChatBlock.Text += message;
-                    ListBox1.Items.Add(message);
-                });
             }
             catch (Exception ex)
             {
