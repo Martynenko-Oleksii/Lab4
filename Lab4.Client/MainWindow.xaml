@@ -6,7 +6,17 @@
         xmlns:local="clr-namespace:Lab4.Client"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
-    <Grid>
+    <Grid Background="#FFF6F2DF">
+        <Button x:Name="Connect" Content="Connect" HorizontalAlignment="Left" Height="40" Margin="167,28,0,0" VerticalAlignment="Top" Width="90" Click="Connect_Click" BorderThickness="2,2,2,2"/>
+        <Button x:Name="ChatStart" Content="Chat Start" HorizontalAlignment="Left" Height="40" Margin="658,28,0,0" VerticalAlignment="Top" Width="90" Click="ChatStart_Click" BorderThickness="2,2,2,2"/>
+        <TextBox x:Name="NicknameField" HorizontalAlignment="Left" Height="20" Margin="20,38,0,0" TextWrapping="Wrap" Text="Input nickname" VerticalAlignment="Top" Width="120" ToolTip="Input nickname"/>
+        <Label x:Name="NicknameLabel" Content="Not connected" HorizontalAlignment="Left" Margin="137,342,0,0" VerticalAlignment="Top" Width="120"/>
+        <TextBox x:Name="TextInput" HorizontalAlignment="Left" Height="26" Margin="277,342,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="275" Text="Input your text you want to sent here." ToolTip="Input your text you want to sent here."/>
+        <Button x:Name="Send" Content="Send" HorizontalAlignment="Left" Height="26" Margin="568,342,0,0" VerticalAlignment="Top" Width="90" Click="Send_Click" BorderThickness="2,2,2,2"/>
+        <ScrollViewer Margin="262,28,138,121" Width="375" Background="#FFEBEBEB">
+            <TextBlock x:Name="ChatBlock" HorizontalAlignment="Left" TextWrapping="Wrap" Text="Not connected" VerticalAlignment="Top" Width="376" Background="#FFEBEBEB" ScrollViewer.HorizontalScrollBarVisibility="Auto"/>
+        </ScrollViewer>
+        
 
     </Grid>
 </Window>

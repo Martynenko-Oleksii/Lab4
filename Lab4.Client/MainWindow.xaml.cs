@@ -24,5 +24,33 @@ namespace Lab4.Client
         {
             InitializeComponent();
         }
+
+        private void ChatStart_Click(object sender, RoutedEventArgs e)
+        {
+            ChatBlock.Text = "";
+        }
+
+        private void Connect_Click(object sender, RoutedEventArgs e)
+        {
+            /*test кнопки удалить*/
+            string tempLabel = new string("");
+            tempLabel = NicknameField.Text;
+            NicknameLabel.Content=tempLabel;
+        }
+
+        private void Send_Click(object sender, RoutedEventArgs e)
+        {
+            /*test кнопки удалить*/
+            string notconn = "Not connected";
+            if (NicknameLabel.Content.ToString() != notconn && Content.ToString() != notconn )
+            {
+                string tempLabel = new string("");
+                tempLabel = NicknameField.Text;
+                string temtext = new string("");
+                temtext = TextInput.Text;
+                ChatBlock.Text += "\n>>" + tempLabel + " Says: " + temtext;
+            }
+            else ChatBlock.Text += "\n" + notconn;
+        }
     }
 }
