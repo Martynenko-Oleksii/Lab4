@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -13,6 +14,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Xml.Linq;
+using Lab4.Generator;
 using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Lab4.Client
@@ -22,7 +25,12 @@ namespace Lab4.Client
     /// </summary>
     public partial class MainWindow : Window
     {
-        HubConnection connection;
+        private HubConnection connection;
+        private RandomKey _randomKey;
+        private ulong _p = 0;
+        private ulong _g = 0;
+        private ulong _publicKey;
+        private ulong _privateKey;
 
         public MainWindow()
         {
@@ -41,22 +49,15 @@ namespace Lab4.Client
             try
             {
                 connection.InvokeAsync("StartChat");
-                ListBox1.Items.Add("Chat was Started");
-                ChatStart.IsEnabled = false;
-
             }
             catch (Exception ex)
             {
-                ListBox1.Items.Add( ex.Message);
+                ListBox1.Items.Add(ex.Message);
             }
         }
 
         private async void Connect_Click(object sender, RoutedEventArgs e)
         {
-            connection = new HubConnectionBuilder()
-                .WithUrl("http://localhost:5140/chat")
-                .Build();
-            connection.Closed += HubConnection_Closed;
             string name = new string("");
             name = NicknameField.Text;
             if (name == "Input nickname")
@@ -66,23 +67,61 @@ namespace Lab4.Client
             }
             else
             {
+                connection = new HubConnectionBuilder()
+                    .WithUrl("http://localhost:5140/chat")
+                    .Build();
+                connection.Closed += HubConnection_Closed;
+
                 ErrorLabel.Visibility = Visibility.Hidden;
                 ListBox1.Items.Clear();
-                connection.On<string, ulong, ulong>("UserConnected", (user, _p, _g) =>
+                connection.On<string, ulong, ulong>("UserConnected", (user, p, g) =>
                 {
                     this.Dispatcher.Invoke(() =>
                     {
-                        
-                        ListBox1.Items.Add("\n" + user + " - User connected");
+                        _p = p;
+                        _g = g;
+                        _randomKey = new RandomKey(_p);
+                        _publicKey = KeyCalculator.CalculateKey(_g, _p, _randomKey.GetPrivateKey());
+
+                        ListBox1.Items.Add("" + user + " - User connected");
                         var newMessage = $"{user}:{_p}:{_g}";
                         //ListBox1.Items.Add(newMessage); // Вывод ключей _p and _g
                     });
                 });
+
+                connection.On("ChatStarted", () =>
+                {
+                    this.Dispatcher.Invoke(() =>
+                    {
+                        ChatStart.IsEnabled = false;
+                        ListBox1.Items.Add("Chat was Started");
+                    });
+
+                    SendKey(_publicKey, 1);
+                });
+
+                connection.On<ulong, int>("ReceivePublicKeyPart", (key, count) =>
+                {
+                    _publicKey = KeyCalculator.CalculateKey(key, _p, _randomKey.GetPrivateKey());
+
+                    SendKey(_publicKey, count + 1);
+                });
+
+                connection.On<ulong>("ReceiveLastPublicKeyPart", (key) =>
+                {
+                    _privateKey = KeyCalculator.CalculateKey(key, _p, _randomKey.GetPrivateKey());
+
+                    this.Dispatcher.Invoke(() =>
+                    {
+                        ListBox1.Items.Add("\nFinal key (" + name + "):" + _privateKey + "\n");
+                    });
+                });
+
                 connection.On<string,string>("ReceiveMessage", (message, named) =>
                 {
                     this.Dispatcher.Invoke(() =>
                     {
-                        ListBox1.Items.Add(">>"+named+" says: "+message);
+                        ListBox1.Items.Add(">>" + named + " says: " + Decryption.DecryptMessage(message, _privateKey));
                     });
                 });
 
@@ -110,7 +149,7 @@ namespace Lab4.Client
             message = TextInput.Text;
             try
             {
-                connection.InvokeAsync("SendMessage", message);
+                connection.InvokeAsync("SendMessage", Encryption.EncryptMessage(message, _privateKey));
                 TextInput.Text = "";
             }
             catch (Exception ex)
@@ -126,5 +165,16 @@ namespace Lab4.Client
             ListBox1.Items.Add("Not Connected");
         }
 
+        private void SendKey(ulong key, int count)
+        {
+            try
+            {
+                connection.InvokeAsync("SendKey", key, count);
+            }
+            catch (Exception ex)
+            {
+                ListBox1.Items.Add(ex.Message);
+            }
+        }
     }
 }

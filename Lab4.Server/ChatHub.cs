@@ -20,6 +20,8 @@ namespace Lab4.Server
 
         private static bool _isChatStarted = false;
 
+        private readonly ILogger<ChatHub> _logger;
+
         static ChatHub()
         {
             var generator = new GeneralValues();
@@ -27,7 +29,10 @@ namespace Lab4.Server
             _g = generator.GetG();
         }
 
-        public ChatHub() { }
+        public ChatHub(ILogger<ChatHub> logger)
+        {
+            _logger = logger;
+        }
 
         public async Task Connect(string name)
         {
